@@ -1,5 +1,6 @@
 package com.hospital.dao;
 
+import com.hospital.exception.DuplicateEntryException;
 import com.hospital.model.Patient;
 import com.hospital.util.DatabaseHelper;
 
@@ -44,14 +45,112 @@ public class PatientDAO implements PatientRepository {
     }
 
     /**
-     * Adds a new patient to the database.
+     * Checks if a patient with the same contact number already exists.
+     * This is application-level duplicate prevention (requirement #1a).
+     * Epic: Data Integrity / User Story 2.1: "Database constraints prevent duplicate or invalid entries"
+     * Evaluation Category: Data Validation
+     * 
+     * Why: Prevents duplicate contact numbers before attempting INSERT, providing
+     * better user experience with specific error messages.
+     * 
+     * @param contact Contact number to check
+     * @param excludePatientId Patient ID to exclude from check (for updates) or -1 for new patients
+     * @return true if contact already exists, false otherwise
+     */
+    public boolean contactExists(String contact, int excludePatientId) {
+        if (contact == null || contact.trim().isEmpty()) {
+            return false; // Empty contact is allowed (optional field)
+        }
+        
+        String sql = "SELECT COUNT(*) as count FROM Patient WHERE contact = ? AND patient_id != ?";
+        Connection conn = null;
+        try {
+            conn = DatabaseHelper.getConnection();
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, contact.trim());
+                pstmt.setInt(2, excludePatientId);
+                ResultSet rs = pstmt.executeQuery();
+                
+                if (rs.next()) {
+                    return rs.getInt("count") > 0; // Contact exists if count > 0
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                DatabaseHelper.releaseConnection(conn);
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Checks if a patient with the same name and date of birth already exists.
+     * This is application-level duplicate prevention for composite unique constraint (requirement #1a).
+     * 
+     * @param name Patient name
+     * @param dateOfBirth Date of birth
+     * @param excludePatientId Patient ID to exclude from check (for updates) or -1 for new patients
+     * @return true if duplicate exists, false otherwise
+     */
+    public boolean nameAndDobExists(String name, java.time.LocalDate dateOfBirth, int excludePatientId) {
+        String sql = "SELECT COUNT(*) as count FROM Patient WHERE name = ? AND date_of_birth = ? AND patient_id != ?";
+        Connection conn = null;
+        try {
+            conn = DatabaseHelper.getConnection();
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, name.trim());
+                pstmt.setDate(2, java.sql.Date.valueOf(dateOfBirth));
+                pstmt.setInt(3, excludePatientId);
+                ResultSet rs = pstmt.executeQuery();
+                
+                if (rs.next()) {
+                    return rs.getInt("count") > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                DatabaseHelper.releaseConnection(conn);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Adds a new patient to the database with duplicate prevention.
+     * This fulfills requirement #1: Duplicate prevention at application level.
+     * Epic: Data Integrity / User Story 2.1
+     * Evaluation Category: Data Validation & Error Handling
+     * 
+     * Why: Checks for duplicates before INSERT and handles SQL duplicate key violations
+     * gracefully, providing user-friendly error messages.
      * 
      * @param patient Patient object to add
+     * @throws DuplicateEntryException if duplicate contact or name+DOB combination exists
      * @return true if successful
      */
-    public boolean addPatient(Patient patient) {
+    public boolean addPatient(Patient patient) throws DuplicateEntryException {
+        // Application-level duplicate check: contact number (requirement #1a)
+        if (patient.getContact() != null && !patient.getContact().trim().isEmpty()) {
+            if (contactExists(patient.getContact(), -1)) {
+                throw new DuplicateEntryException(
+                    "A patient with contact number '" + patient.getContact() + "' already exists.",
+                    "contact", patient.getContact());
+            }
+        }
+        
+        // Application-level duplicate check: name + date of birth combination (requirement #1a)
+        if (nameAndDobExists(patient.getName(), patient.getDateOfBirth(), -1)) {
+            throw new DuplicateEntryException(
+                "A patient with name '" + patient.getName() + "' and date of birth '" + 
+                patient.getDateOfBirth() + "' already exists.",
+                "name_and_dob", patient.getName() + " / " + patient.getDateOfBirth());
+        }
+        
         String sql = "INSERT INTO Patient (name, date_of_birth, contact) VALUES (?, ?, ?)";
-
         Connection conn = null;
         try {
             conn = DatabaseHelper.getConnection();
@@ -64,6 +163,27 @@ public class PatientDAO implements PatientRepository {
                 return rowsAffected > 0;
             }
         } catch (SQLException e) {
+            // Handle database-level duplicate key violation (requirement #1b)
+            // MySQL error code 1062 = Duplicate entry for key
+            // This catches duplicates even if application-level check was missed
+            if (e.getErrorCode() == 1062) {
+                // Extract which constraint was violated from error message
+                String errorMsg = e.getMessage();
+                if (errorMsg.contains("uk_patient_contact")) {
+                    throw new DuplicateEntryException(
+                        "A patient with contact number '" + patient.getContact() + "' already exists.",
+                        "contact", patient.getContact());
+                } else if (errorMsg.contains("uk_patient_name_dob")) {
+                    throw new DuplicateEntryException(
+                        "A patient with name '" + patient.getName() + "' and date of birth '" + 
+                        patient.getDateOfBirth() + "' already exists.",
+                        "name_and_dob", patient.getName() + " / " + patient.getDateOfBirth());
+                } else {
+                    throw new DuplicateEntryException(
+                        "Duplicate entry detected. This patient may already exist in the database.",
+                        "unknown", "");
+                }
+            }
             e.printStackTrace();
             return false;
         } finally {

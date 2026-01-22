@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch Hospital Management System",
+            "request": "launch",
+            "mainClass": "com.hospital.Launcher",
+            "projectName": "hospital-management-system",
+            "vmArgs": "--module-path ${workspaceFolder}/target/classes --add-modules javafx.controls,javafx.fxml --add-reads com.hospital=ALL-UNNAMED"
+        },
+        {
+            "type": "java",
+            "name": "Launch Current File",
+            "request": "launch",
+            "mainClass": "${file}",
+            "vmArgs": "--add-reads com.hospital=ALL-UNNAMED"
+        }
+    ]
+}

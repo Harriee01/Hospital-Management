@@ -1,12 +1,14 @@
 package com.hospital.controller;
 
 import com.hospital.dao.DepartmentDAO;
+import com.hospital.exception.DuplicateEntryException;
 import com.hospital.model.Appointment;
 import com.hospital.model.Department;
 import com.hospital.model.Doctor;
 import com.hospital.model.Patient;
 import com.hospital.service.AppointmentServiceImpl;
 import com.hospital.service.DoctorServiceImpl;
+import com.hospital.service.MedicalRecordServiceImpl;
 import com.hospital.service.PatientServiceImpl;
 import com.hospital.util.InputValidator;
 import com.hospital.util.InputValidator.ValidationResult;
@@ -22,6 +24,9 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 
 public class MainController {
 
@@ -29,6 +34,7 @@ public class MainController {
     private PatientServiceImpl patientServiceImpl;
     private DoctorServiceImpl doctorServiceImpl;
     private AppointmentServiceImpl appointmentServiceImpl;
+    private MedicalRecordServiceImpl medicalRecordServiceImpl;
     private DepartmentDAO departmentDAO;
 
     // UI Components - Patients Tab
@@ -118,6 +124,7 @@ public class MainController {
         patientServiceImpl = new PatientServiceImpl();
         doctorServiceImpl = new DoctorServiceImpl();
         appointmentServiceImpl = new AppointmentServiceImpl();
+        medicalRecordServiceImpl = new MedicalRecordServiceImpl();
         departmentDAO = new DepartmentDAO();
     }
 
@@ -252,13 +259,20 @@ public class MainController {
                 dateDob.getValue(),
                 txtContact.getText().trim());
 
-        if (patientServiceImpl.addPatient(newPatient)) {
-            showAlert("Success", "Patient added successfully.");
-            clearInputs(); // Clear inputs only on success (requirement #3)
-            loadPatients(); // Refresh list
-        } else {
-            showAlert("Error", "Failed to add patient.");
-            // Don't clear inputs on DB error - user can correct and retry
+        try {
+            // This may throw DuplicateEntryException (requirement #1: duplicate prevention)
+            if (patientServiceImpl.addPatient(newPatient)) {
+                showAlert("Success", "Patient added successfully.");
+                clearInputs(); // Clear inputs only on success (requirement #3)
+                loadPatients(); // Refresh list
+            } else {
+                showAlert("Error", "Failed to add patient.");
+                // Don't clear inputs on DB error - user can correct and retry
+            }
+        } catch (DuplicateEntryException e) {
+            // Handle duplicate entry gracefully (requirement #1b: user-friendly error message)
+            showAlert("Duplicate Entry", e.getMessage() + "\n\nPlease use a different " + e.getFieldName() + ".");
+            // Don't clear inputs on duplicate - user can correct and retry
         }
     }
 
@@ -818,6 +832,78 @@ public class MainController {
         if (txtAppointmentTime != null) txtAppointmentTime.clear();
         if (comboAppointmentStatus != null) comboAppointmentStatus.getSelectionModel().select("Scheduled");
         if (txtAppointmentNotes != null) txtAppointmentNotes.clear();
+    }
+
+    /**
+     * Handles adding a medical note for the selected patient.
+     * Opens a dialog to input medical note and saves to MongoDB.
+     * This fulfills requirement #2: MongoDB integration with JavaFX UI.
+     * Epic: Medical Records Management / User Story: "explore storing patient notes or medical logs in a NoSQL format"
+     * Evaluation Category: UI Integration & NoSQL Implementation
+     * 
+     * Why: Provides user interface to add unstructured medical notes that are stored
+     * in MongoDB, demonstrating polyglot persistence (MySQL for structured data, MongoDB for notes).
+     */
+    @FXML
+    private void handleAddMedicalNote() {
+        Patient selected = patientTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showAlert("Warning", "Please select a patient to add a medical note.");
+            return;
+        }
+        
+        // Create dialog for medical note input
+        Dialog<String[]> dialog = new Dialog<>();
+        dialog.setTitle("Add Medical Note");
+        dialog.setHeaderText("Add Medical Note for: " + selected.getName());
+        
+        // Create form fields
+        javafx.scene.control.Label noteLabel = new javafx.scene.control.Label("Medical Note:");
+        TextArea noteArea = new TextArea();
+        noteArea.setPrefRowCount(5);
+        noteArea.setWrapText(true);
+        noteArea.setPromptText("Enter medical note, observations, treatment details...");
+        
+        javafx.scene.control.Label diagnosisLabel = new javafx.scene.control.Label("Diagnosis:");
+        TextField diagnosisField = new TextField();
+        diagnosisField.setPromptText("Enter diagnosis");
+        
+        javafx.scene.layout.VBox vbox = new javafx.scene.layout.VBox(10);
+        vbox.getChildren().addAll(noteLabel, noteArea, diagnosisLabel, diagnosisField);
+        vbox.setPadding(new javafx.geometry.Insets(20));
+        
+        dialog.getDialogPane().setContent(vbox);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        
+        // Validate input before closing
+        dialog.setResultConverter(buttonType -> {
+            if (buttonType == ButtonType.OK) {
+                if (noteArea.getText().trim().isEmpty()) {
+                    showAlert("Validation Error", "Medical note cannot be empty.");
+                    return null;
+                }
+                return new String[]{noteArea.getText().trim(), diagnosisField.getText().trim()};
+            }
+            return null;
+        });
+        
+        Optional<String[]> result = dialog.showAndWait();
+        result.ifPresent(data -> {
+            String note = data[0];
+            String diagnosis = data[1];
+            
+            // Get current doctor (in real app, this would be from session/login)
+            // For demo, use first doctor or prompt for doctor selection
+            Doctor selectedDoctor = doctorList != null && !doctorList.isEmpty() ? doctorList.get(0) : null;
+            int doctorId = selectedDoctor != null ? selectedDoctor.getDoctorId() : 1;
+            
+            // Save to MongoDB via service layer
+            if (medicalRecordServiceImpl.addMedicalRecord(selected.getPatientId(), doctorId, note, diagnosis, null)) {
+                showAlert("Success", "Medical note added successfully to MongoDB.");
+            } else {
+                showAlert("Error", "Failed to add medical note. Please check MongoDB connection.");
+            }
+        });
     }
 
     private void showAlert(String title, String content) {

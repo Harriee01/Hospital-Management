@@ -1,5 +1,6 @@
 package com.hospital.service;
 
+import com.hospital.exception.DuplicateEntryException;
 import com.hospital.model.Patient;
 import java.util.List;
 
@@ -9,7 +10,7 @@ import java.util.List;
  */
 public interface PatientService {
     List<Patient> getAllPatients();
-    boolean addPatient(Patient patient);
+    boolean addPatient(Patient patient) throws DuplicateEntryException;
     boolean updatePatient(Patient patient);
     boolean deletePatient(int id);
     List<Patient> searchPatients(String query);

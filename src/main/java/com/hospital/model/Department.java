@@ -1,5 +1,12 @@
 package com.hospital.model;
 
+/**
+ * Model class representing a Department entity.
+ * 
+ * A Department represents a medical department in the hospital (e.g., Cardiology, Neurology).
+ * Contains department identification, name, and physical location information.
+ * Doctors are associated with departments through the department_id foreign key.
+ */
 public class Department {
     private int departmentId;
     private String name;

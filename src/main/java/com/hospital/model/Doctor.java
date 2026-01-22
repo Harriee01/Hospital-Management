@@ -2,6 +2,11 @@ package com.hospital.model;
 
 /**
  * Model class representing a Doctor entity.
+ * 
+ * A Doctor represents a medical professional in the hospital system.
+ * Contains doctor name, medical specialization, and department assignment.
+ * Doctors are linked to Appointments, Prescriptions, and PatientFeedback
+ * through foreign key relationships. Associated with a Department through department_id.
  */
 public class Doctor {
     private int doctorId;

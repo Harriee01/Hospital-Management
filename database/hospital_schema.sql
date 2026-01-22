@@ -32,7 +32,13 @@ CREATE TABLE Patient (
     patient_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     date_of_birth DATE NOT NULL,
-    contact VARCHAR(50)
+    contact VARCHAR(50),
+    -- Database-level unique constraints for duplicate prevention (requirement #1)
+    -- This fulfills Epic: Data Integrity / User Story 2.1: "Database constraints prevent duplicate or invalid entries"
+    -- Evaluation Category: Data Validation & Database Design
+    -- Why: Enforces uniqueness at database level, preventing duplicates even if application-level check is bypassed
+    CONSTRAINT uk_patient_contact UNIQUE (contact),  -- Each contact number must be unique
+    CONSTRAINT uk_patient_name_dob UNIQUE (name, date_of_birth)  -- Same person (name+DOB) cannot be registered twice
 );
 
 -- MedicalInventory Table

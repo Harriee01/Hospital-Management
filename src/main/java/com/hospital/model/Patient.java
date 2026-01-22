@@ -4,6 +4,11 @@ import java.time.LocalDate;
 
 /**
  * Model class representing a Patient entity.
+ * 
+ * A Patient represents a person registered in the hospital system.
+ * Contains personal information: name, date of birth, and contact number.
+ * Patients are linked to Appointments, Prescriptions, and PatientFeedback
+ * through foreign key relationships in the database.
  */
 public class Patient {
     private int patientId;

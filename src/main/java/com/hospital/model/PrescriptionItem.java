@@ -1,5 +1,12 @@
 package com.hospital.model;
 
+/**
+ * Model class representing a PrescriptionItem entity.
+ * 
+ * A PrescriptionItem represents a single medication item within a Prescription.
+ * Links a Prescription to a MedicalInventory item (medication) and specifies
+ * the dosage instructions for that medication.
+ */
 public class PrescriptionItem {
     private int prescriptionItemId;
     private int prescriptionId;

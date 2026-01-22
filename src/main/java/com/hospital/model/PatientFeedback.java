@@ -1,5 +1,12 @@
 package com.hospital.model;
 
+/**
+ * Model class representing a PatientFeedback entity.
+ * 
+ * PatientFeedback stores patient ratings and comments about doctors.
+ * Links a Patient to a Doctor with a rating (1-5 scale) and optional comments.
+ * Used for quality assurance and doctor performance evaluation.
+ */
 public class PatientFeedback {
     private int feedbackId;
     private int patientId;

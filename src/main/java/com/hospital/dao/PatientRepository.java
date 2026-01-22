@@ -1,5 +1,6 @@
 package com.hospital.dao;
 
+import com.hospital.exception.DuplicateEntryException;
 import com.hospital.model.Patient;
 import java.util.List;
 
@@ -10,7 +11,7 @@ import java.util.List;
 public interface PatientRepository {
     List<Patient> getAllPatients();
     Patient getPatientById(int id);
-    boolean addPatient(Patient patient);
+    boolean addPatient(Patient patient) throws DuplicateEntryException;
     boolean updatePatient(Patient patient);
     boolean deletePatient(int id);
     List<Patient> searchPatients(String query);

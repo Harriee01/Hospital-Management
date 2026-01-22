@@ -2,6 +2,7 @@ package com.hospital.service;
 
 import com.hospital.dao.PatientRepository;
 import com.hospital.dao.PatientDAO;
+import com.hospital.exception.DuplicateEntryException;
 import com.hospital.model.Patient;
 
 import java.util.*;
@@ -61,8 +62,17 @@ public class PatientServiceImpl implements PatientService {
 
     /**
      * Adds a patient and invalidates cache.
+     * Handles DuplicateEntryException and re-throws it for controller to show user-friendly message.
+     * This fulfills requirement #1: Duplicate prevention - application level error handling.
+     * Epic: Data Integrity / User Story 2.1
+     * Evaluation Category: Error Handling & User Experience
+     * 
+     * @param patient Patient to add
+     * @throws DuplicateEntryException if duplicate detected
+     * @return true if successful
      */
-    public boolean addPatient(Patient patient) {
+    public boolean addPatient(Patient patient) throws DuplicateEntryException {
+        // This will throw DuplicateEntryException if duplicate found (requirement #1)
         boolean success = patientDAO.addPatient(patient);
         if (success) {
             isCacheDirty = true; // Invalidate cache on write

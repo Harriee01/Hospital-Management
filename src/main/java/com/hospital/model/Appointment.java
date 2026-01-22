@@ -2,6 +2,13 @@ package com.hospital.model;
 
 import java.time.LocalDateTime;
 
+/**
+ * Model class representing an Appointment entity.
+ * 
+ * An Appointment links a Patient with a Doctor at a specific date and time.
+ * Contains appointment status (Scheduled, Completed, Cancelled) and references
+ * to both patient and doctor entities from the relational database.
+ */
 public class Appointment {
     private int appointmentId;
     private int patientId;

@@ -2,6 +2,13 @@ package com.hospital.model;
 
 import java.time.LocalDate;
 
+/**
+ * Model class representing a MedicalInventory entity.
+ * 
+ * MedicalInventory represents medications and medical supplies stored in the hospital.
+ * Tracks medication name, available quantity, and expiry date for inventory management.
+ * Used in PrescriptionItems to link prescriptions to specific medications.
+ */
 public class MedicalInventory {
     private int medId;
     private String name;

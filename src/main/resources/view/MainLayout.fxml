@@ -3,25 +3,26 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.hospital.controller.MainController">
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.hospital.controller.MainController" style="-fx-background-color: #070F12;">
     <center>
-        <TabPane tabClosingPolicy="UNAVAILABLE">
+        <TabPane tabClosingPolicy="UNAVAILABLE" style="-fx-background-color: #003B46;">
             <tabs>
                 <!-- Patients Tab -->
                 <Tab text="Patients">
                     <content>
-                        <BorderPane>
+                        <BorderPane style="-fx-background-color: #070F12;">
                             <top>
-                                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10;">
-                                    <Label text="Search:"/>
-                                    <TextField fx:id="searchField" promptText="Name or ID"/>
-                                    <Button text="Search" onAction="#handleSearch"/>
-                                    <Button text="Reset Search" onAction="#handleResetPatientSearch" style="-fx-base: #FF9800;"/>
+                                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 15; -fx-background-color: #003B46;">
+                                    <Label text="Search:" style="-fx-text-fill: #FFFFFF; -fx-font-size: 14px;"/>
+                                    <TextField fx:id="searchField" promptText="Name or ID" style="-fx-background-color: #FFFFFF; -fx-text-fill: #070F12;"/>
+                                    <Button text="Search" onAction="#handleSearch" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 80;"/>
+                                    <Button text="Reset Search" onAction="#handleResetPatientSearch" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 100;"/>
                                 </HBox>
                             </top>
                             <center>
-                                <TableView fx:id="patientTable" onMouseClicked="#handleTableClick">
+                                <TableView fx:id="patientTable" onMouseClicked="#handleTableClick" style="-fx-background-color: #003B46;">
                                     <columns>
                                         <TableColumn fx:id="colId" text="ID" prefWidth="50"/>
                                         <TableColumn fx:id="colName" text="Name" prefWidth="150"/>
@@ -31,23 +32,24 @@
                                 </TableView>
                             </center>
                             <right>
-                                <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #f4f4f4;">
-                                    <Label text="Patient Details" style="-fx-font-weight: bold;"/>
+                                <VBox spacing="12" style="-fx-padding: 15; -fx-background-color: #003B46;">
+                                    <Label text="Patient Details" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #FFFFFF;"/>
                                     
-                                    <Label text="Name:"/>
-                                    <TextField fx:id="txtName"/>
+                                    <Label text="Name:" style="-fx-text-fill: #FFFFFF;"/>
+                                    <TextField fx:id="txtName" style="-fx-background-color: #FFFFFF; -fx-text-fill: #070F12;"/>
                                     
-                                    <Label text="Date of Birth:"/>
-                                    <DatePicker fx:id="dateDob"/>
+                                    <Label text="Date of Birth:" style="-fx-text-fill: #FFFFFF;"/>
+                                    <DatePicker fx:id="dateDob" style="-fx-background-color: #FFFFFF;"/>
                                     
-                                    <Label text="Contact:"/>
-                                    <TextField fx:id="txtContact"/>
+                                    <Label text="Contact:" style="-fx-text-fill: #FFFFFF;"/>
+                                    <TextField fx:id="txtContact" style="-fx-background-color: #FFFFFF; -fx-text-fill: #070F12;"/>
                                     
                                     <HBox spacing="10" alignment="CENTER">
-                                        <Button text="Add" onAction="#handleAddPatient" style="-fx-base: #4CAF50;"/>
-                                        <Button text="Update" onAction="#handleUpdatePatient" style="-fx-base: #2196F3;"/>
-                                        <Button text="Delete" onAction="#handleDeletePatient" style="-fx-base: #F44336;"/>
+                                        <Button text="Add" onAction="#handleAddPatient" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 70;"/>
+                                        <Button text="Update" onAction="#handleUpdatePatient" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 70;"/>
+                                        <Button text="Delete" onAction="#handleDeletePatient" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 70;"/>
                                     </HBox>
+                                    <Button text="Add Medical Note" onAction="#handleAddMedicalNote" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 200;"/>
                                 </VBox>
                             </right>
                         </BorderPane>
@@ -57,17 +59,17 @@
                 <!-- Doctors Tab -->
                 <Tab text="Doctors">
                     <content>
-                        <BorderPane>
+                        <BorderPane style="-fx-background-color: #070F12;">
                             <top>
-                                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10;">
-                                    <Label text="Search:"/>
-                                    <TextField fx:id="doctorSearchField" promptText="Name, Specialization, or ID"/>
-                                    <Button text="Search" onAction="#handleDoctorSearch"/>
-                                    <Button text="Reset Search" onAction="#handleResetDoctorSearch" style="-fx-base: #FF9800;"/>
+                                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 15; -fx-background-color: #003B46;">
+                                    <Label text="Search:" style="-fx-text-fill: #FFFFFF; -fx-font-size: 14px;"/>
+                                    <TextField fx:id="doctorSearchField" promptText="Name, Specialization, or ID" style="-fx-background-color: #FFFFFF; -fx-text-fill: #070F12;"/>
+                                    <Button text="Search" onAction="#handleDoctorSearch" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 80;"/>
+                                    <Button text="Reset Search" onAction="#handleResetDoctorSearch" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 100;"/>
                                 </HBox>
                             </top>
                             <center>
-                                <TableView fx:id="doctorTable" onMouseClicked="#handleDoctorTableClick">
+                                <TableView fx:id="doctorTable" onMouseClicked="#handleDoctorTableClick" style="-fx-background-color: #003B46;">
                                     <columns>
                                         <TableColumn fx:id="colDoctorId" text="ID" prefWidth="50"/>
                                         <TableColumn fx:id="colDoctorName" text="Name" prefWidth="150"/>
@@ -77,22 +79,22 @@
                                 </TableView>
                             </center>
                             <right>
-                                <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #f4f4f4;">
-                                    <Label text="Doctor Details" style="-fx-font-weight: bold;"/>
+                                <VBox spacing="12" style="-fx-padding: 15; -fx-background-color: #003B46;">
+                                    <Label text="Doctor Details" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #FFFFFF;"/>
                                     
-                                    <Label text="Name:"/>
-                                    <TextField fx:id="txtDoctorName"/>
+                                    <Label text="Name:" style="-fx-text-fill: #FFFFFF;"/>
+                                    <TextField fx:id="txtDoctorName" style="-fx-background-color: #FFFFFF; -fx-text-fill: #070F12;"/>
                                     
-                                    <Label text="Specialization:"/>
-                                    <TextField fx:id="txtSpecialization"/>
+                                    <Label text="Specialization:" style="-fx-text-fill: #FFFFFF;"/>
+                                    <TextField fx:id="txtSpecialization" style="-fx-background-color: #FFFFFF; -fx-text-fill: #070F12;"/>
                                     
-                                    <Label text="Department:"/>
-                                    <ComboBox fx:id="comboDepartment" prefWidth="200"/>
+                                    <Label text="Department:" style="-fx-text-fill: #FFFFFF;"/>
+                                    <ComboBox fx:id="comboDepartment" prefWidth="200" style="-fx-background-color: #FFFFFF;"/>
                                     
                                     <HBox spacing="10" alignment="CENTER">
-                                        <Button text="Add" onAction="#handleAddDoctor" style="-fx-base: #4CAF50;"/>
-                                        <Button text="Update" onAction="#handleUpdateDoctor" style="-fx-base: #2196F3;"/>
-                                        <Button text="Delete" onAction="#handleDeleteDoctor" style="-fx-base: #F44336;"/>
+                                        <Button text="Add" onAction="#handleAddDoctor" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 70;"/>
+                                        <Button text="Update" onAction="#handleUpdateDoctor" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 70;"/>
+                                        <Button text="Delete" onAction="#handleDeleteDoctor" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 70;"/>
                                     </HBox>
                                 </VBox>
                             </right>
@@ -103,17 +105,17 @@
                 <!-- Appointments Tab -->
                 <Tab text="Appointments">
                     <content>
-                        <BorderPane>
+                        <BorderPane style="-fx-background-color: #070F12;">
                             <top>
-                                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10;">
-                                    <Label text="Search:"/>
-                                    <TextField fx:id="appointmentSearchField" promptText="ID or Status"/>
-                                    <Button text="Search" onAction="#handleAppointmentSearch"/>
-                                    <Button text="Reset Search" onAction="#handleResetAppointmentSearch" style="-fx-base: #FF9800;"/>
+                                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 15; -fx-background-color: #003B46;">
+                                    <Label text="Search:" style="-fx-text-fill: #FFFFFF; -fx-font-size: 14px;"/>
+                                    <TextField fx:id="appointmentSearchField" promptText="ID or Status" style="-fx-background-color: #FFFFFF; -fx-text-fill: #070F12;"/>
+                                    <Button text="Search" onAction="#handleAppointmentSearch" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 80;"/>
+                                    <Button text="Reset Search" onAction="#handleResetAppointmentSearch" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 100;"/>
                                 </HBox>
                             </top>
                             <center>
-                                <TableView fx:id="appointmentTable" onMouseClicked="#handleAppointmentTableClick">
+                                <TableView fx:id="appointmentTable" onMouseClicked="#handleAppointmentTableClick" style="-fx-background-color: #003B46;">
                                     <columns>
                                         <TableColumn fx:id="colAppointmentId" text="ID" prefWidth="50"/>
                                         <TableColumn fx:id="colAppointmentPatient" text="Patient ID" prefWidth="80"/>
@@ -124,31 +126,31 @@
                                 </TableView>
                             </center>
                             <right>
-                                <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #f4f4f4;">
-                                    <Label text="Appointment Details" style="-fx-font-weight: bold;"/>
+                                <VBox spacing="12" style="-fx-padding: 15; -fx-background-color: #003B46;">
+                                    <Label text="Appointment Details" style="-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #FFFFFF;"/>
                                     
-                                    <Label text="Patient:"/>
-                                    <ComboBox fx:id="comboAppointmentPatient" prefWidth="200"/>
+                                    <Label text="Patient:" style="-fx-text-fill: #FFFFFF;"/>
+                                    <ComboBox fx:id="comboAppointmentPatient" prefWidth="200" style="-fx-background-color: #FFFFFF;"/>
                                     
-                                    <Label text="Doctor:"/>
-                                    <ComboBox fx:id="comboAppointmentDoctor" prefWidth="200"/>
+                                    <Label text="Doctor:" style="-fx-text-fill: #FFFFFF;"/>
+                                    <ComboBox fx:id="comboAppointmentDoctor" prefWidth="200" style="-fx-background-color: #FFFFFF;"/>
                                     
-                                    <Label text="Date:"/>
-                                    <DatePicker fx:id="dateAppointmentDate" prefWidth="200"/>
+                                    <Label text="Date:" style="-fx-text-fill: #FFFFFF;"/>
+                                    <DatePicker fx:id="dateAppointmentDate" prefWidth="200" style="-fx-background-color: #FFFFFF;"/>
                                     
-                                    <Label text="Time (HH:MM):"/>
-                                    <TextField fx:id="txtAppointmentTime" promptText="09:00" prefWidth="200"/>
+                                    <Label text="Time (HH:MM):" style="-fx-text-fill: #FFFFFF;"/>
+                                    <TextField fx:id="txtAppointmentTime" promptText="09:00" prefWidth="200" style="-fx-background-color: #FFFFFF; -fx-text-fill: #070F12;"/>
                                     
-                                    <Label text="Status:"/>
-                                    <ComboBox fx:id="comboAppointmentStatus" prefWidth="200"/>
+                                    <Label text="Status:" style="-fx-text-fill: #FFFFFF;"/>
+                                    <ComboBox fx:id="comboAppointmentStatus" prefWidth="200" style="-fx-background-color: #FFFFFF;"/>
                                     
-                                    <Label text="Notes/Reason:"/>
-                                    <TextArea fx:id="txtAppointmentNotes" prefRowCount="3" prefWidth="200" wrapText="true"/>
+                                    <Label text="Notes/Reason:" style="-fx-text-fill: #FFFFFF;"/>
+                                    <TextArea fx:id="txtAppointmentNotes" prefRowCount="3" prefWidth="200" wrapText="true" style="-fx-background-color: #FFFFFF; -fx-text-fill: #070F12;"/>
                                     
                                     <HBox spacing="10" alignment="CENTER">
-                                        <Button text="Add" onAction="#handleAddAppointment" style="-fx-base: #4CAF50;"/>
-                                        <Button text="Update" onAction="#handleUpdateAppointment" style="-fx-base: #2196F3;"/>
-                                        <Button text="Delete" onAction="#handleDeleteAppointment" style="-fx-base: #F44336;"/>
+                                        <Button text="Add" onAction="#handleAddAppointment" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 70;"/>
+                                        <Button text="Update" onAction="#handleUpdateAppointment" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 70;"/>
+                                        <Button text="Delete" onAction="#handleDeleteAppointment" style="-fx-background-color: #006770; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-pref-width: 70;"/>
                                     </HBox>
                                 </VBox>
                             </right>
@@ -159,8 +161,8 @@
         </TabPane>
     </center>
     <bottom>
-        <HBox style="-fx-padding: 5;">
-            <Label fx:id="lblStatus" text="Ready"/>
+        <HBox style="-fx-padding: 10; -fx-background-color: #003B46;">
+            <Label fx:id="lblStatus" text="Ready" style="-fx-text-fill: #FFFFFF; -fx-font-size: 12px;"/>
         </HBox>
     </bottom>
 </BorderPane>

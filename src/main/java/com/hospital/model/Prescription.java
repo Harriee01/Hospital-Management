@@ -2,6 +2,13 @@ package com.hospital.model;
 
 import java.time.LocalDate;
 
+/**
+ * Model class representing a Prescription entity.
+ * 
+ * A Prescription links a Patient with a Doctor and contains the date when the prescription
+ * was issued. PrescriptionItems (medications) are associated with a Prescription through
+ * the prescription_id foreign key, creating a one-to-many relationship.
+ */
 public class Prescription {
     private int prescriptionId;
     private int patientId;
