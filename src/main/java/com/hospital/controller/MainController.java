@@ -1,7 +1,11 @@
 package com.hospital.controller;
 
+import com.hospital.dao.DepartmentDAO;
+import com.hospital.model.Department;
+import com.hospital.model.Doctor;
 import com.hospital.model.Patient;
-import com.hospital.service.PatientService;
+import com.hospital.service.DoctorServiceImpl;
+import com.hospital.service.PatientServiceImpl;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -14,7 +18,9 @@ import java.util.Optional;
 public class MainController {
 
     // Services
-    private PatientService patientService;
+    private PatientServiceImpl patientServiceImpl;
+    private DoctorServiceImpl doctorServiceImpl;
+    private DepartmentDAO departmentDAO;
 
     // UI Components - Patients Tab
     @FXML
@@ -38,31 +44,74 @@ public class MainController {
     @FXML
     private TextField txtContact;
 
+    // UI Components - Doctors Tab
+    @FXML
+    private TextField doctorSearchField;
+    @FXML
+    private TableView<Doctor> doctorTable;
+    @FXML
+    private TableColumn<Doctor, Integer> colDoctorId;
+    @FXML
+    private TableColumn<Doctor, String> colDoctorName;
+    @FXML
+    private TableColumn<Doctor, String> colSpecialization;
+    @FXML
+    private TableColumn<Doctor, Integer> colDepartmentId;
+
+    // UI Components - Doctor Inputs
+    @FXML
+    private TextField txtDoctorName;
+    @FXML
+    private TextField txtSpecialization;
+    @FXML
+    private ComboBox<Department> comboDepartment;
+
     @FXML
     private Label lblStatus;
 
     // Data
     private ObservableList<Patient> patientList;
+    private ObservableList<Doctor> doctorList;
+    private ObservableList<Department> departmentList;
 
     public MainController() {
-        patientService = new PatientService();
+        patientServiceImpl = new PatientServiceImpl();
+        doctorServiceImpl = new DoctorServiceImpl();
+        departmentDAO = new DepartmentDAO();
     }
 
     @FXML
     public void initialize() {
-        setupTable();
+        setupPatientTable();
+        setupDoctorTable();
         loadPatients();
+        loadDoctors();
+        loadDepartments();
     }
 
-    private void setupTable() {
+    private void setupPatientTable() {
         colId.setCellValueFactory(new PropertyValueFactory<>("patientId"));
         colName.setCellValueFactory(new PropertyValueFactory<>("name"));
         colDob.setCellValueFactory(new PropertyValueFactory<>("dateOfBirth"));
         colContact.setCellValueFactory(new PropertyValueFactory<>("contact"));
     }
 
+    private void setupDoctorTable() {
+        colDoctorId.setCellValueFactory(new PropertyValueFactory<>("doctorId"));
+        colDoctorName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        colSpecialization.setCellValueFactory(new PropertyValueFactory<>("specialization"));
+        colDepartmentId.setCellValueFactory(new PropertyValueFactory<>("departmentId"));
+    }
+
+    private void loadDepartments() {
+        departmentList = FXCollections.observableArrayList(departmentDAO.getAllDepartments());
+        if (comboDepartment != null) {
+            comboDepartment.setItems(departmentList);
+        }
+    }
+
     private void loadPatients() {
-        patientList = FXCollections.observableArrayList(patientService.getAllPatients());
+        patientList = FXCollections.observableArrayList(patientServiceImpl.getAllPatients());
         patientTable.setItems(patientList);
         lblStatus.setText("Loaded " + patientList.size() + " patients.");
     }
@@ -70,7 +119,7 @@ public class MainController {
     @FXML
     private void handleSearch() {
         String query = searchField.getText();
-        patientList = FXCollections.observableArrayList(patientService.searchPatients(query));
+        patientList = FXCollections.observableArrayList(patientServiceImpl.searchPatients(query));
         patientTable.setItems(patientList);
         lblStatus.setText("Found " + patientList.size() + " results.");
     }
@@ -85,7 +134,7 @@ public class MainController {
                 dateDob.getValue(),
                 txtContact.getText());
 
-        if (patientService.addPatient(newPatient)) {
+        if (patientServiceImpl.addPatient(newPatient)) {
             lblStatus.setText("Patient added successfully.");
             clearInputs();
             loadPatients(); // Refresh list
@@ -109,7 +158,7 @@ public class MainController {
         selected.setDateOfBirth(dateDob.getValue());
         selected.setContact(txtContact.getText());
 
-        if (patientService.updatePatient(selected)) {
+        if (patientServiceImpl.updatePatient(selected)) {
             lblStatus.setText("Patient updated successfully.");
             clearInputs();
             loadPatients();
@@ -132,11 +181,11 @@ public class MainController {
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            if (patientService.deletePatient(selected.getPatientId())) {
-                lblStatus.setText("Patient deleted.");
+            if (patientServiceImpl.deletePatient(selected.getPatientId())) {
+                lblStatus.setText("Patient deleted successfully along with related records.");
                 loadPatients();
             } else {
-                showAlert("Error", "Failed to delete patient.");
+                showAlert("Error", "Failed to delete patient. Please check if patient has active records that cannot be deleted.");
             }
         }
     }
@@ -163,6 +212,141 @@ public class MainController {
         txtName.clear();
         dateDob.setValue(null);
         txtContact.clear();
+    }
+
+    // ========== Doctor Management Methods ==========
+
+    private void loadDoctors() {
+        if (doctorTable != null) {
+            doctorList = FXCollections.observableArrayList(doctorServiceImpl.getAllDoctors());
+            doctorTable.setItems(doctorList);
+            if (lblStatus != null) {
+                lblStatus.setText("Loaded " + doctorList.size() + " doctors.");
+            }
+        }
+    }
+
+    @FXML
+    private void handleDoctorSearch() {
+        if (doctorSearchField != null && doctorTable != null) {
+            String query = doctorSearchField.getText();
+            doctorList = FXCollections.observableArrayList(doctorServiceImpl.searchDoctors(query));
+            doctorTable.setItems(doctorList);
+            if (lblStatus != null) {
+                lblStatus.setText("Found " + doctorList.size() + " doctor results.");
+            }
+        }
+    }
+
+    @FXML
+    private void handleAddDoctor() {
+        if (!validateDoctorInputs())
+            return;
+
+        Department selectedDept = comboDepartment.getSelectionModel().getSelectedItem();
+        if (selectedDept == null) {
+            showAlert("Validation Error", "Please select a department.");
+            return;
+        }
+
+        Doctor newDoctor = new Doctor(
+                txtDoctorName.getText(),
+                txtSpecialization.getText(),
+                selectedDept.getDepartmentId());
+
+        if (doctorServiceImpl.addDoctor(newDoctor)) {
+            lblStatus.setText("Doctor added successfully.");
+            clearDoctorInputs();
+            loadDoctors();
+        } else {
+            showAlert("Error", "Failed to add doctor.");
+        }
+    }
+
+    @FXML
+    private void handleUpdateDoctor() {
+        Doctor selected = doctorTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showAlert("Warning", "Please select a doctor to update.");
+            return;
+        }
+        if (!validateDoctorInputs())
+            return;
+
+        Department selectedDept = comboDepartment.getSelectionModel().getSelectedItem();
+        if (selectedDept == null) {
+            showAlert("Validation Error", "Please select a department.");
+            return;
+        }
+
+        selected.setName(txtDoctorName.getText());
+        selected.setSpecialization(txtSpecialization.getText());
+        selected.setDepartmentId(selectedDept.getDepartmentId());
+
+        if (doctorServiceImpl.updateDoctor(selected)) {
+            lblStatus.setText("Doctor updated successfully.");
+            clearDoctorInputs();
+            loadDoctors();
+        } else {
+            showAlert("Error", "Failed to update doctor.");
+        }
+    }
+
+    @FXML
+    private void handleDeleteDoctor() {
+        Doctor selected = doctorTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showAlert("Warning", "Please select a doctor to delete.");
+            return;
+        }
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Delete");
+        alert.setContentText("Are you sure you want to delete " + selected.getName() + "?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            if (doctorServiceImpl.deleteDoctor(selected.getDoctorId())) {
+                lblStatus.setText("Doctor deleted.");
+                loadDoctors();
+            } else {
+                showAlert("Error", "Failed to delete doctor.");
+            }
+        }
+    }
+
+    @FXML
+    private void handleDoctorTableClick() {
+        Doctor selected = doctorTable.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            txtDoctorName.setText(selected.getName());
+            txtSpecialization.setText(selected.getSpecialization());
+            
+            // Find and select the department
+            for (Department dept : departmentList) {
+                if (dept.getDepartmentId() == selected.getDepartmentId()) {
+                    comboDepartment.getSelectionModel().select(dept);
+                    break;
+                }
+            }
+        }
+    }
+
+    private boolean validateDoctorInputs() {
+        if (txtDoctorName == null || txtSpecialization == null) {
+            return false;
+        }
+        if (txtDoctorName.getText().isEmpty() || txtSpecialization.getText().isEmpty()) {
+            showAlert("Validation Error", "Please fill in all required fields (Name, Specialization).");
+            return false;
+        }
+        return true;
+    }
+
+    private void clearDoctorInputs() {
+        if (txtDoctorName != null) txtDoctorName.clear();
+        if (txtSpecialization != null) txtSpecialization.clear();
+        if (comboDepartment != null) comboDepartment.getSelectionModel().clearSelection();
     }
 
     private void showAlert(String title, String content) {

@@ -1,17 +1,17 @@
-package com.hospital.service;
+package com.hospital.dao;
 
 import com.hospital.model.Patient;
 import java.util.List;
 
 /**
- * Interface for Patient Service.
- * Follows Dependency Inversion Principle - high-level modules depend on abstractions.
+ * Interface for Patient Data Access Object.
+ * Follows Interface Segregation Principle - defines contract for Patient data operations.
  */
-public interface PatientService {
+public interface PatientRepository {
     List<Patient> getAllPatients();
+    Patient getPatientById(int id);
     boolean addPatient(Patient patient);
     boolean updatePatient(Patient patient);
     boolean deletePatient(int id);
     List<Patient> searchPatients(String query);
-    void sortPatientsByName();
 }

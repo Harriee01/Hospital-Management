@@ -53,11 +53,49 @@
                     </content>
                 </Tab>
                 
-                <!-- Additional Tabs for Doctors, Appointments could go here -->
-                <Tab text="Doctors (Preview)">
-                     <content>
-                        <Label text="Doctor Management Module implementation follows similar patterns." alignment="CENTER"/>
-                     </content>
+                <!-- Doctors Tab -->
+                <Tab text="Doctors">
+                    <content>
+                        <BorderPane>
+                            <top>
+                                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10;">
+                                    <Label text="Search:"/>
+                                    <TextField fx:id="doctorSearchField" promptText="Name, Specialization, or ID"/>
+                                    <Button text="Search" onAction="#handleDoctorSearch"/>
+                                </HBox>
+                            </top>
+                            <center>
+                                <TableView fx:id="doctorTable" onMouseClicked="#handleDoctorTableClick">
+                                    <columns>
+                                        <TableColumn fx:id="colDoctorId" text="ID" prefWidth="50"/>
+                                        <TableColumn fx:id="colDoctorName" text="Name" prefWidth="150"/>
+                                        <TableColumn fx:id="colSpecialization" text="Specialization" prefWidth="150"/>
+                                        <TableColumn fx:id="colDepartmentId" text="Dept ID" prefWidth="80"/>
+                                    </columns>
+                                </TableView>
+                            </center>
+                            <right>
+                                <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #f4f4f4;">
+                                    <Label text="Doctor Details" style="-fx-font-weight: bold;"/>
+                                    
+                                    <Label text="Name:"/>
+                                    <TextField fx:id="txtDoctorName"/>
+                                    
+                                    <Label text="Specialization:"/>
+                                    <TextField fx:id="txtSpecialization"/>
+                                    
+                                    <Label text="Department:"/>
+                                    <ComboBox fx:id="comboDepartment" prefWidth="200"/>
+                                    
+                                    <HBox spacing="10" alignment="CENTER">
+                                        <Button text="Add" onAction="#handleAddDoctor" style="-fx-base: #4CAF50;"/>
+                                        <Button text="Update" onAction="#handleUpdateDoctor" style="-fx-base: #2196F3;"/>
+                                        <Button text="Delete" onAction="#handleDeleteDoctor" style="-fx-base: #F44336;"/>
+                                    </HBox>
+                                </VBox>
+                            </right>
+                        </BorderPane>
+                    </content>
                 </Tab>
             </tabs>
         </TabPane>
