@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.hospital.controller.MainController">
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE">
+            <tabs>
+                <!-- Patients Tab -->
+                <Tab text="Patients">
+                    <content>
+                        <BorderPane>
+                            <top>
+                                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10;">
+                                    <Label text="Search:"/>
+                                    <TextField fx:id="searchField" promptText="Name or ID"/>
+                                    <Button text="Search" onAction="#handleSearch"/>
+                                </HBox>
+                            </top>
+                            <center>
+                                <TableView fx:id="patientTable" onMouseClicked="#handleTableClick">
+                                    <columns>
+                                        <TableColumn fx:id="colId" text="ID" prefWidth="50"/>
+                                        <TableColumn fx:id="colName" text="Name" prefWidth="150"/>
+                                        <TableColumn fx:id="colDob" text="Date of Birth" prefWidth="100"/>
+                                        <TableColumn fx:id="colContact" text="Contact" prefWidth="100"/>
+                                    </columns>
+                                </TableView>
+                            </center>
+                            <right>
+                                <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #f4f4f4;">
+                                    <Label text="Patient Details" style="-fx-font-weight: bold;"/>
+                                    
+                                    <Label text="Name:"/>
+                                    <TextField fx:id="txtName"/>
+                                    
+                                    <Label text="Date of Birth:"/>
+                                    <DatePicker fx:id="dateDob"/>
+                                    
+                                    <Label text="Contact:"/>
+                                    <TextField fx:id="txtContact"/>
+                                    
+                                    <HBox spacing="10" alignment="CENTER">
+                                        <Button text="Add" onAction="#handleAddPatient" style="-fx-base: #4CAF50;"/>
+                                        <Button text="Update" onAction="#handleUpdatePatient" style="-fx-base: #2196F3;"/>
+                                        <Button text="Delete" onAction="#handleDeletePatient" style="-fx-base: #F44336;"/>
+                                    </HBox>
+                                </VBox>
+                            </right>
+                        </BorderPane>
+                    </content>
+                </Tab>
+                
+                <!-- Additional Tabs for Doctors, Appointments could go here -->
+                <Tab text="Doctors (Preview)">
+                     <content>
+                        <Label text="Doctor Management Module implementation follows similar patterns." alignment="CENTER"/>
+                     </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
+    <bottom>
+        <HBox style="-fx-padding: 5;">
+            <Label fx:id="lblStatus" text="Ready"/>
+        </HBox>
+    </bottom>
+</BorderPane>
