@@ -124,3 +124,66 @@ INSERT INTO PrescriptionItem (prescription_id, med_id, dosage) VALUES
 
 INSERT INTO PatientFeedback (patient_id, doctor_id, rating, comments) VALUES 
 (1, 1, 5, 'Dr. Smith was very professional.');
+
+-- =======================================================================================
+-- 3. Database Indexes for Performance Optimization
+-- =======================================================================================
+-- These indexes improve query performance for frequently searched/filtered columns.
+-- Requirement #4: Implement indexing (database level)
+
+-- Index on Patient name for fast name-based searches
+-- WHY: Patient names are frequently searched using LIKE '%name%' queries.
+-- This index allows MySQL to use index scans instead of full table scans.
+-- Performance improvement: O(n) full table scan -> O(log n) index lookup for exact matches,
+-- and faster partial matches with LIKE queries.
+CREATE INDEX idx_patient_name ON Patient(name);
+
+-- Index on Patient date_of_birth for age-based queries and sorting
+-- WHY: Date of birth is used for age calculations and date range queries.
+-- This index speeds up ORDER BY date_of_birth and WHERE date_of_birth BETWEEN queries.
+CREATE INDEX idx_patient_dob ON Patient(date_of_birth);
+
+-- Index on Doctor name for fast doctor name searches
+-- WHY: Doctor names are frequently searched in appointment and prescription queries.
+-- Similar performance benefit as patient name index.
+CREATE INDEX idx_doctor_name ON Doctor(name);
+
+-- Index on Doctor department_id for filtering doctors by department
+-- WHY: Frequently used in WHERE department_id = ? queries when displaying doctors by department.
+-- Foreign key columns are often queried, so indexing improves JOIN performance.
+CREATE INDEX idx_doctor_department ON Doctor(department_id);
+
+-- Index on Appointment appointment_date for date-based queries and scheduling
+-- WHY: Critical for appointment scheduling - used to check for conflicts and display appointments by date.
+-- This is the most important index for requirement #5 (duplicate/conflict prevention).
+-- Performance: Without index, checking for conflicts requires full table scan O(n).
+-- With index, MySQL can quickly find appointments on a specific date/time O(log n).
+CREATE INDEX idx_appointment_date ON Appointment(appointment_date);
+
+-- Composite index on Appointment (doctor_id, appointment_date) for conflict detection
+-- WHY: When checking for duplicate appointments, we query WHERE doctor_id = ? AND appointment_date = ?.
+-- This composite index allows MySQL to use both conditions efficiently in a single index lookup.
+-- This is essential for requirement #5: duplicate prevention logic.
+-- Performance: Single index lookup instead of scanning all appointments for a doctor.
+CREATE INDEX idx_appointment_doctor_date ON Appointment(doctor_id, appointment_date);
+
+-- Index on Appointment patient_id for patient appointment history queries
+-- WHY: Frequently queried to show all appointments for a specific patient.
+-- Improves performance of patient appointment history views.
+CREATE INDEX idx_appointment_patient ON Appointment(patient_id);
+
+-- Index on Appointment status for filtering appointments by status (Scheduled, Completed, Cancelled)
+-- WHY: Common query pattern: WHERE status = 'Scheduled' to show upcoming appointments.
+CREATE INDEX idx_appointment_status ON Appointment(status);
+
+-- Index on Prescription patient_id for patient prescription history
+-- WHY: Frequently queried to show all prescriptions for a patient.
+CREATE INDEX idx_prescription_patient ON Prescription(patient_id);
+
+-- Index on Prescription doctor_id for doctor prescription history
+-- WHY: Frequently queried to show all prescriptions by a doctor.
+CREATE INDEX idx_prescription_doctor ON Prescription(doctor_id);
+
+-- Index on Prescription prescription_date for date-based prescription queries
+-- WHY: Used for sorting and filtering prescriptions by date.
+CREATE INDEX idx_prescription_date ON Prescription(prescription_date);

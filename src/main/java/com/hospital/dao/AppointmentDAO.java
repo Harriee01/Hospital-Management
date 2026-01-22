@@ -22,15 +22,22 @@ public class AppointmentDAO {
         List<Appointment> appointments = new ArrayList<>();
         String sql = "SELECT * FROM Appointment ORDER BY appointment_date DESC";
 
-        try (Connection conn = DatabaseHelper.getConnection();
-                Statement stmt = conn.createStatement();
-                ResultSet rs = stmt.executeQuery(sql)) {
+        Connection conn = null;
+        try {
+            conn = DatabaseHelper.getConnection();
+            try (Statement stmt = conn.createStatement();
+                 ResultSet rs = stmt.executeQuery(sql)) {
 
-            while (rs.next()) {
-                appointments.add(mapResultSetToAppointment(rs));
+                while (rs.next()) {
+                    appointments.add(mapResultSetToAppointment(rs));
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                DatabaseHelper.releaseConnection(conn);
+            }
         }
         return appointments;
     }
@@ -44,17 +51,23 @@ public class AppointmentDAO {
     public Appointment getAppointmentById(int id) {
         String sql = "SELECT * FROM Appointment WHERE appointment_id = ?";
 
-        try (Connection conn = DatabaseHelper.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = null;
+        try {
+            conn = DatabaseHelper.getConnection();
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, id);
+                ResultSet rs = pstmt.executeQuery();
 
-            pstmt.setInt(1, id);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                return mapResultSetToAppointment(rs);
+                if (rs.next()) {
+                    return mapResultSetToAppointment(rs);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                DatabaseHelper.releaseConnection(conn);
+            }
         }
         return null;
     }
@@ -68,20 +81,73 @@ public class AppointmentDAO {
     public boolean addAppointment(Appointment appointment) {
         String sql = "INSERT INTO Appointment (patient_id, doctor_id, status, appointment_date) VALUES (?, ?, ?, ?)";
 
-        try (Connection conn = DatabaseHelper.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = null;
+        try {
+            conn = DatabaseHelper.getConnection();
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, appointment.getPatientId());
+                pstmt.setInt(2, appointment.getDoctorId());
+                pstmt.setString(3, appointment.getStatus());
+                pstmt.setTimestamp(4, Timestamp.valueOf(appointment.getAppointmentDate()));
 
-            pstmt.setInt(1, appointment.getPatientId());
-            pstmt.setInt(2, appointment.getDoctorId());
-            pstmt.setString(3, appointment.getStatus());
-            pstmt.setTimestamp(4, Timestamp.valueOf(appointment.getAppointmentDate()));
-
-            int rowsAffected = pstmt.executeUpdate();
-            return rowsAffected > 0;
+                int rowsAffected = pstmt.executeUpdate();
+                return rowsAffected > 0;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
+        } finally {
+            if (conn != null) {
+                DatabaseHelper.releaseConnection(conn);
+            }
         }
+    }
+
+    /**
+     * Checks for duplicate/conflicting appointments for the same doctor at the same date/time.
+     * This method is critical for requirement #5: duplicate prevention.
+     * 
+     * Logic: An appointment conflicts if:
+     * - Same doctor_id
+     * - Same appointment_date (same date and time)
+     * - Different appointment_id (to exclude the appointment being updated)
+     * 
+     * Uses the composite index idx_appointment_doctor_date for fast lookup.
+     * 
+     * @param doctorId Doctor ID to check
+     * @param appointmentDate Date and time of the appointment
+     * @param excludeAppointmentId Appointment ID to exclude (for updates) or -1 for new appointments
+     * @return true if a conflict exists, false otherwise
+     */
+    public boolean hasConflict(int doctorId, java.time.LocalDateTime appointmentDate, int excludeAppointmentId) {
+        String sql = "SELECT COUNT(*) as conflict_count FROM Appointment " +
+                     "WHERE doctor_id = ? AND appointment_date = ? " +
+                     "AND appointment_id != ?";
+        
+        Connection conn = null;
+        try {
+            conn = DatabaseHelper.getConnection();
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, doctorId);
+                pstmt.setTimestamp(2, Timestamp.valueOf(appointmentDate));
+                pstmt.setInt(3, excludeAppointmentId);
+                
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    int count = rs.getInt("conflict_count");
+                    return count > 0; // Conflict exists if count > 0
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // On error, assume conflict exists to be safe
+            return true;
+        } finally {
+            if (conn != null) {
+                DatabaseHelper.releaseConnection(conn);
+            }
+        }
+        return false;
     }
 
     /**
@@ -93,20 +159,26 @@ public class AppointmentDAO {
     public boolean updateAppointment(Appointment appointment) {
         String sql = "UPDATE Appointment SET patient_id=?, doctor_id=?, status=?, appointment_date=? WHERE appointment_id=?";
 
-        try (Connection conn = DatabaseHelper.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        Connection conn = null;
+        try {
+            conn = DatabaseHelper.getConnection();
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, appointment.getPatientId());
+                pstmt.setInt(2, appointment.getDoctorId());
+                pstmt.setString(3, appointment.getStatus());
+                pstmt.setTimestamp(4, Timestamp.valueOf(appointment.getAppointmentDate()));
+                pstmt.setInt(5, appointment.getAppointmentId());
 
-            pstmt.setInt(1, appointment.getPatientId());
-            pstmt.setInt(2, appointment.getDoctorId());
-            pstmt.setString(3, appointment.getStatus());
-            pstmt.setTimestamp(4, Timestamp.valueOf(appointment.getAppointmentDate()));
-            pstmt.setInt(5, appointment.getAppointmentId());
-
-            int rowsAffected = pstmt.executeUpdate();
-            return rowsAffected > 0;
+                int rowsAffected = pstmt.executeUpdate();
+                return rowsAffected > 0;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
+        } finally {
+            if (conn != null) {
+                DatabaseHelper.releaseConnection(conn);
+            }
         }
     }
 
@@ -119,15 +191,21 @@ public class AppointmentDAO {
     public boolean deleteAppointment(int id) {
         String sql = "DELETE FROM Appointment WHERE appointment_id=?";
 
-        try (Connection conn = DatabaseHelper.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, id);
-            int rowsAffected = pstmt.executeUpdate();
-            return rowsAffected > 0;
+        Connection conn = null;
+        try {
+            conn = DatabaseHelper.getConnection();
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, id);
+                int rowsAffected = pstmt.executeUpdate();
+                return rowsAffected > 0;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
+        } finally {
+            if (conn != null) {
+                DatabaseHelper.releaseConnection(conn);
+            }
         }
     }
 

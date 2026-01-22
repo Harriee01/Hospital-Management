@@ -17,6 +17,7 @@
                                     <Label text="Search:"/>
                                     <TextField fx:id="searchField" promptText="Name or ID"/>
                                     <Button text="Search" onAction="#handleSearch"/>
+                                    <Button text="Reset Search" onAction="#handleResetPatientSearch" style="-fx-base: #FF9800;"/>
                                 </HBox>
                             </top>
                             <center>
@@ -62,6 +63,7 @@
                                     <Label text="Search:"/>
                                     <TextField fx:id="doctorSearchField" promptText="Name, Specialization, or ID"/>
                                     <Button text="Search" onAction="#handleDoctorSearch"/>
+                                    <Button text="Reset Search" onAction="#handleResetDoctorSearch" style="-fx-base: #FF9800;"/>
                                 </HBox>
                             </top>
                             <center>
@@ -91,6 +93,62 @@
                                         <Button text="Add" onAction="#handleAddDoctor" style="-fx-base: #4CAF50;"/>
                                         <Button text="Update" onAction="#handleUpdateDoctor" style="-fx-base: #2196F3;"/>
                                         <Button text="Delete" onAction="#handleDeleteDoctor" style="-fx-base: #F44336;"/>
+                                    </HBox>
+                                </VBox>
+                            </right>
+                        </BorderPane>
+                    </content>
+                </Tab>
+                
+                <!-- Appointments Tab -->
+                <Tab text="Appointments">
+                    <content>
+                        <BorderPane>
+                            <top>
+                                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10;">
+                                    <Label text="Search:"/>
+                                    <TextField fx:id="appointmentSearchField" promptText="ID or Status"/>
+                                    <Button text="Search" onAction="#handleAppointmentSearch"/>
+                                    <Button text="Reset Search" onAction="#handleResetAppointmentSearch" style="-fx-base: #FF9800;"/>
+                                </HBox>
+                            </top>
+                            <center>
+                                <TableView fx:id="appointmentTable" onMouseClicked="#handleAppointmentTableClick">
+                                    <columns>
+                                        <TableColumn fx:id="colAppointmentId" text="ID" prefWidth="50"/>
+                                        <TableColumn fx:id="colAppointmentPatient" text="Patient ID" prefWidth="80"/>
+                                        <TableColumn fx:id="colAppointmentDoctor" text="Doctor ID" prefWidth="80"/>
+                                        <TableColumn fx:id="colAppointmentDate" text="Date &amp; Time" prefWidth="150"/>
+                                        <TableColumn fx:id="colAppointmentStatus" text="Status" prefWidth="100"/>
+                                    </columns>
+                                </TableView>
+                            </center>
+                            <right>
+                                <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #f4f4f4;">
+                                    <Label text="Appointment Details" style="-fx-font-weight: bold;"/>
+                                    
+                                    <Label text="Patient:"/>
+                                    <ComboBox fx:id="comboAppointmentPatient" prefWidth="200"/>
+                                    
+                                    <Label text="Doctor:"/>
+                                    <ComboBox fx:id="comboAppointmentDoctor" prefWidth="200"/>
+                                    
+                                    <Label text="Date:"/>
+                                    <DatePicker fx:id="dateAppointmentDate" prefWidth="200"/>
+                                    
+                                    <Label text="Time (HH:MM):"/>
+                                    <TextField fx:id="txtAppointmentTime" promptText="09:00" prefWidth="200"/>
+                                    
+                                    <Label text="Status:"/>
+                                    <ComboBox fx:id="comboAppointmentStatus" prefWidth="200"/>
+                                    
+                                    <Label text="Notes/Reason:"/>
+                                    <TextArea fx:id="txtAppointmentNotes" prefRowCount="3" prefWidth="200" wrapText="true"/>
+                                    
+                                    <HBox spacing="10" alignment="CENTER">
+                                        <Button text="Add" onAction="#handleAddAppointment" style="-fx-base: #4CAF50;"/>
+                                        <Button text="Update" onAction="#handleUpdateAppointment" style="-fx-base: #2196F3;"/>
+                                        <Button text="Delete" onAction="#handleDeleteAppointment" style="-fx-base: #F44336;"/>
                                     </HBox>
                                 </VBox>
                             </right>
