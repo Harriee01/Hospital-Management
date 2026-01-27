@@ -11,7 +11,8 @@ import java.util.*;
  * Implements Caching, Conflict Detection, and CRUD operations.
  * Follows SOLID principles: Single Responsibility, Dependency Inversion.
  * 
- * This service implements requirement #5: Appointment management with duplicate prevention.
+ * This service implements requirement #5: Appointment management with duplicate
+ * prevention.
  */
 public class AppointmentServiceImpl implements AppointmentService {
 
@@ -127,15 +128,32 @@ public class AppointmentServiceImpl implements AppointmentService {
      * Checks for duplicate/conflicting appointments.
      * This method is critical for requirement #5: duplicate prevention.
      * 
-     * A conflict exists if the same doctor has an appointment at the same date/time,
+     * A conflict exists if the same doctor has an appointment at the same
+     * date/time,
      * excluding the appointment being updated (if any).
      * 
-     * @param doctorId Doctor ID to check
-     * @param appointmentDate Date and time of the appointment
-     * @param excludeAppointmentId Appointment ID to exclude (for updates) or -1 for new appointments
+     * @param doctorId             Doctor ID to check
+     * @param appointmentDate      Date and time of the appointment
+     * @param excludeAppointmentId Appointment ID to exclude (for updates) or -1 for
+     *                             new appointments
      * @return true if a conflict exists, false otherwise
      */
     public boolean hasConflict(int doctorId, LocalDateTime appointmentDate, int excludeAppointmentId) {
         return appointmentDAO.hasConflict(doctorId, appointmentDate, excludeAppointmentId);
+    }
+
+    /**
+     * Retrieves all appointments with patient and doctor names.
+     * Direct pass-through to DAO (not cached in this version).
+     */
+    public List<com.hospital.model.AppointmentDTO> getAllAppointmentsWithNames() {
+        return appointmentDAO.getAllAppointmentsWithNames();
+    }
+
+    /**
+     * Searches appointments with patient and doctor names.
+     */
+    public List<com.hospital.model.AppointmentDTO> searchAppointmentsWithNames(String query) {
+        return appointmentDAO.searchAppointmentsWithNames(query);
     }
 }

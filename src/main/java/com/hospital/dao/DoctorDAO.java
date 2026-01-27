@@ -27,7 +27,7 @@ public class DoctorDAO implements DoctorRepository {
         try {
             conn = DatabaseHelper.getConnection();
             try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
 
                 while (rs.next()) {
                     doctors.add(mapResultSetToDoctor(rs));
@@ -233,5 +233,89 @@ public class DoctorDAO implements DoctorRepository {
                 rs.getString("name"),
                 rs.getString("specialization"),
                 rs.getInt("department_id"));
+    }
+
+    /**
+     * Retrieves all doctors with their department names for UI display.
+     * Uses JOIN to get department information in a single query.
+     * 
+     * @return List of DoctorDTO objects with department names
+     */
+    public List<com.hospital.model.DoctorDTO> getAllDoctorsWithDepartment() {
+        List<com.hospital.model.DoctorDTO> doctors = new ArrayList<>();
+        String sql = "SELECT d.doctor_id, d.name, d.specialization, d.department_id, dep.name AS department_name " +
+                "FROM Doctor d " +
+                "LEFT JOIN Department dep ON d.department_id = dep.department_id " +
+                "ORDER BY d.name";
+
+        Connection conn = null;
+        try {
+            conn = DatabaseHelper.getConnection();
+            try (Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery(sql)) {
+
+                while (rs.next()) {
+                    com.hospital.model.DoctorDTO doctorDTO = new com.hospital.model.DoctorDTO(
+                            rs.getInt("doctor_id"),
+                            rs.getString("name"),
+                            rs.getString("specialization"),
+                            rs.getString("department_name"),
+                            rs.getInt("department_id"));
+                    doctors.add(doctorDTO);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                DatabaseHelper.releaseConnection(conn);
+            }
+        }
+        return doctors;
+    }
+
+    /**
+     * Searches for doctors with department names by Name or Specialization.
+     * 
+     * @param query Search string
+     * @return List of matching DoctorDTO objects with department names
+     */
+    public List<com.hospital.model.DoctorDTO> searchDoctorsWithDepartment(String query) {
+        List<com.hospital.model.DoctorDTO> doctors = new ArrayList<>();
+        String sql = "SELECT d.doctor_id, d.name, d.specialization, d.department_id, dep.name AS department_name " +
+                "FROM Doctor d " +
+                "LEFT JOIN Department dep ON d.department_id = dep.department_id " +
+                "WHERE d.doctor_id LIKE ? OR d.name LIKE ? OR d.specialization LIKE ? OR dep.name LIKE ?";
+
+        String searchPattern = "%" + query + "%";
+
+        Connection conn = null;
+        try {
+            conn = DatabaseHelper.getConnection();
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, searchPattern);
+                pstmt.setString(2, searchPattern);
+                pstmt.setString(3, searchPattern);
+                pstmt.setString(4, searchPattern);
+
+                ResultSet rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    com.hospital.model.DoctorDTO doctorDTO = new com.hospital.model.DoctorDTO(
+                            rs.getInt("doctor_id"),
+                            rs.getString("name"),
+                            rs.getString("specialization"),
+                            rs.getString("department_name"),
+                            rs.getInt("department_id"));
+                    doctors.add(doctorDTO);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                DatabaseHelper.releaseConnection(conn);
+            }
+        }
+        return doctors;
     }
 }

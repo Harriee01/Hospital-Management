@@ -131,4 +131,19 @@ public class DoctorServiceImpl implements DoctorService {
                 .filter(d -> d.getDepartmentId() == departmentId)
                 .collect(Collectors.toList());
     }
+
+    /**
+     * Retrieves doctors with department info for UI.
+     * Direct pass-through to DAO (not cached in this version).
+     */
+    public List<com.hospital.model.DoctorDTO> getDoctorsWithDepartment() {
+        return doctorDAO.getAllDoctorsWithDepartment();
+    }
+
+    /**
+     * Searches doctors with department info.
+     */
+    public List<com.hospital.model.DoctorDTO> searchDoctorsWithDepartment(String query) {
+        return doctorDAO.searchDoctorsWithDepartment(query);
+    }
 }

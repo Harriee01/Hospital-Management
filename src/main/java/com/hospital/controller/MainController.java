@@ -3,8 +3,10 @@ package com.hospital.controller;
 import com.hospital.dao.DepartmentDAO;
 import com.hospital.exception.DuplicateEntryException;
 import com.hospital.model.Appointment;
+import com.hospital.model.AppointmentDTO;
 import com.hospital.model.Department;
 import com.hospital.model.Doctor;
+import com.hospital.model.DoctorDTO;
 import com.hospital.model.Patient;
 import com.hospital.service.AppointmentServiceImpl;
 import com.hospital.service.DoctorServiceImpl;
@@ -63,15 +65,15 @@ public class MainController {
     @FXML
     private TextField doctorSearchField;
     @FXML
-    private TableView<Doctor> doctorTable;
+    private TableView<DoctorDTO> doctorTable;
     @FXML
-    private TableColumn<Doctor, Integer> colDoctorId;
+    private TableColumn<DoctorDTO, Integer> colDoctorId;
     @FXML
-    private TableColumn<Doctor, String> colDoctorName;
+    private TableColumn<DoctorDTO, String> colDoctorName;
     @FXML
-    private TableColumn<Doctor, String> colSpecialization;
+    private TableColumn<DoctorDTO, String> colSpecialization;
     @FXML
-    private TableColumn<Doctor, Integer> colDepartmentId;
+    private TableColumn<DoctorDTO, String> colDepartmentName;
 
     // UI Components - Doctor Inputs
     @FXML
@@ -85,17 +87,17 @@ public class MainController {
     @FXML
     private TextField appointmentSearchField;
     @FXML
-    private TableView<Appointment> appointmentTable;
+    private TableView<AppointmentDTO> appointmentTable;
     @FXML
-    private TableColumn<Appointment, Integer> colAppointmentId;
+    private TableColumn<AppointmentDTO, Integer> colAppointmentId;
     @FXML
-    private TableColumn<Appointment, Integer> colAppointmentPatient;
+    private TableColumn<AppointmentDTO, String> colAppointmentPatient;
     @FXML
-    private TableColumn<Appointment, Integer> colAppointmentDoctor;
+    private TableColumn<AppointmentDTO, String> colAppointmentDoctor;
     @FXML
-    private TableColumn<Appointment, LocalDateTime> colAppointmentDate;
+    private TableColumn<AppointmentDTO, LocalDateTime> colAppointmentDate;
     @FXML
-    private TableColumn<Appointment, String> colAppointmentStatus;
+    private TableColumn<AppointmentDTO, String> colAppointmentStatus;
 
     // UI Components - Appointment Inputs
     @FXML
@@ -116,9 +118,11 @@ public class MainController {
 
     // Data
     private ObservableList<Patient> patientList;
-    private ObservableList<Doctor> doctorList;
+    private ObservableList<DoctorDTO> doctorList;
     private ObservableList<Department> departmentList;
-    private ObservableList<Appointment> appointmentList;
+    private ObservableList<AppointmentDTO> appointmentList;
+    private ObservableList<Doctor> allDoctorsForCombo; // Cache for combo box
+    private ObservableList<Patient> allPatientsForCombo; // Cache for combo box
 
     public MainController() {
         patientServiceImpl = new PatientServiceImpl();
@@ -150,14 +154,14 @@ public class MainController {
         colDoctorId.setCellValueFactory(new PropertyValueFactory<>("doctorId"));
         colDoctorName.setCellValueFactory(new PropertyValueFactory<>("name"));
         colSpecialization.setCellValueFactory(new PropertyValueFactory<>("specialization"));
-        colDepartmentId.setCellValueFactory(new PropertyValueFactory<>("departmentId"));
+        colDepartmentName.setCellValueFactory(new PropertyValueFactory<>("departmentName"));
     }
 
     private void setupAppointmentTable() {
         if (colAppointmentId != null) {
             colAppointmentId.setCellValueFactory(new PropertyValueFactory<>("appointmentId"));
-            colAppointmentPatient.setCellValueFactory(new PropertyValueFactory<>("patientId"));
-            colAppointmentDoctor.setCellValueFactory(new PropertyValueFactory<>("doctorId"));
+            colAppointmentPatient.setCellValueFactory(new PropertyValueFactory<>("patientName"));
+            colAppointmentDoctor.setCellValueFactory(new PropertyValueFactory<>("doctorName"));
             colAppointmentDate.setCellValueFactory(new PropertyValueFactory<>("appointmentDate"));
             colAppointmentStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         }
@@ -172,20 +176,23 @@ public class MainController {
 
     private void loadAppointments() {
         if (appointmentTable != null) {
-            appointmentList = FXCollections.observableArrayList(appointmentServiceImpl.getAllAppointments());
+            appointmentList = FXCollections.observableArrayList(appointmentServiceImpl.getAllAppointmentsWithNames());
             appointmentTable.setItems(appointmentList);
-            
+
             // Populate patient and doctor combos for appointment form
-            if (comboAppointmentPatient != null && patientList != null) {
-                comboAppointmentPatient.setItems(patientList);
+            if (comboAppointmentPatient != null) {
+                allPatientsForCombo = FXCollections.observableArrayList(patientServiceImpl.getAllPatients());
+                comboAppointmentPatient.setItems(allPatientsForCombo);
             }
-            if (comboAppointmentDoctor != null && doctorList != null) {
-                comboAppointmentDoctor.setItems(doctorList);
+            if (comboAppointmentDoctor != null) {
+                allDoctorsForCombo = FXCollections.observableArrayList(doctorServiceImpl.getAllDoctors());
+                comboAppointmentDoctor.setItems(allDoctorsForCombo);
             }
-            
+
             // Populate status combo
             if (comboAppointmentStatus != null) {
-                ObservableList<String> statuses = FXCollections.observableArrayList("Scheduled", "Completed", "Cancelled");
+                ObservableList<String> statuses = FXCollections.observableArrayList("Scheduled", "Completed",
+                        "Cancelled");
                 comboAppointmentStatus.setItems(statuses);
                 comboAppointmentStatus.getSelectionModel().select("Scheduled");
             }
@@ -207,8 +214,10 @@ public class MainController {
     }
 
     /**
-     * Resets the patient search by clearing the search field and reloading all patients.
-     * This fulfills requirement #2: Add "Reset" / "Clear Search" button functionality.
+     * Resets the patient search by clearing the search field and reloading all
+     * patients.
+     * This fulfills requirement #2: Add "Reset" / "Clear Search" button
+     * functionality.
      */
     @FXML
     private void handleResetPatientSearch() {
@@ -270,7 +279,8 @@ public class MainController {
                 // Don't clear inputs on DB error - user can correct and retry
             }
         } catch (DuplicateEntryException e) {
-            // Handle duplicate entry gracefully (requirement #1b: user-friendly error message)
+            // Handle duplicate entry gracefully (requirement #1b: user-friendly error
+            // message)
             showAlert("Duplicate Entry", e.getMessage() + "\n\nPlease use a different " + e.getFieldName() + ".");
             // Don't clear inputs on duplicate - user can correct and retry
         }
@@ -331,7 +341,8 @@ public class MainController {
 
     /**
      * Handles deleting a patient.
-     * Clears inputs and table selection only on successful operation (requirement #3).
+     * Clears inputs and table selection only on successful operation (requirement
+     * #3).
      */
     @FXML
     private void handleDeletePatient() {
@@ -353,7 +364,8 @@ public class MainController {
                 patientTable.getSelectionModel().clearSelection(); // Clear table selection
                 loadPatients();
             } else {
-                showAlert("Error", "Failed to delete patient. Please check if patient has active records that cannot be deleted.");
+                showAlert("Error",
+                        "Failed to delete patient. Please check if patient has active records that cannot be deleted.");
                 // Don't clear inputs on error
             }
         }
@@ -369,7 +381,6 @@ public class MainController {
         }
     }
 
-
     private void clearInputs() {
         txtName.clear();
         dateDob.setValue(null);
@@ -380,8 +391,10 @@ public class MainController {
 
     private void loadDoctors() {
         if (doctorTable != null) {
-            doctorList = FXCollections.observableArrayList(doctorServiceImpl.getAllDoctors());
+            doctorList = FXCollections.observableArrayList(doctorServiceImpl.getDoctorsWithDepartment());
             doctorTable.setItems(doctorList);
+            // Pre-load doctors for combo boxes
+            allDoctorsForCombo = FXCollections.observableArrayList(doctorServiceImpl.getAllDoctors());
             if (lblStatus != null) {
                 lblStatus.setText("Loaded " + doctorList.size() + " doctors.");
             }
@@ -392,7 +405,7 @@ public class MainController {
     private void handleDoctorSearch() {
         if (doctorSearchField != null && doctorTable != null) {
             String query = doctorSearchField.getText();
-            doctorList = FXCollections.observableArrayList(doctorServiceImpl.searchDoctors(query));
+            doctorList = FXCollections.observableArrayList(doctorServiceImpl.searchDoctorsWithDepartment(query));
             doctorTable.setItems(doctorList);
             if (lblStatus != null) {
                 lblStatus.setText("Found " + doctorList.size() + " doctor results.");
@@ -401,8 +414,10 @@ public class MainController {
     }
 
     /**
-     * Resets the doctor search by clearing the search field and reloading all doctors.
-     * This fulfills requirement #2: Add "Reset" / "Clear Search" button functionality.
+     * Resets the doctor search by clearing the search field and reloading all
+     * doctors.
+     * This fulfills requirement #2: Add "Reset" / "Clear Search" button
+     * functionality.
      */
     @FXML
     private void handleResetDoctorSearch() {
@@ -468,7 +483,7 @@ public class MainController {
      */
     @FXML
     private void handleUpdateDoctor() {
-        Doctor selected = doctorTable.getSelectionModel().getSelectedItem();
+        DoctorDTO selected = doctorTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showAlert("Warning", "Please select a doctor to update.");
             return;
@@ -494,11 +509,12 @@ public class MainController {
         }
 
         // All validations passed, update doctor
-        selected.setName(txtDoctorName.getText().trim());
-        selected.setSpecialization(txtSpecialization.getText().trim());
-        selected.setDepartmentId(selectedDept.getDepartmentId());
+        Doctor updateDoctor = new Doctor(selected.getDoctorId(),
+                txtDoctorName.getText().trim(),
+                txtSpecialization.getText().trim(),
+                selectedDept.getDepartmentId());
 
-        if (doctorServiceImpl.updateDoctor(selected)) {
+        if (doctorServiceImpl.updateDoctor(updateDoctor)) {
             showAlert("Success", "Doctor updated successfully.");
             clearDoctorInputs(); // Clear inputs only on success (requirement #3)
             loadDoctors();
@@ -510,11 +526,12 @@ public class MainController {
 
     /**
      * Handles deleting a doctor.
-     * Clears inputs and table selection only on successful operation (requirement #3).
+     * Clears inputs and table selection only on successful operation (requirement
+     * #3).
      */
     @FXML
     private void handleDeleteDoctor() {
-        Doctor selected = doctorTable.getSelectionModel().getSelectedItem();
+        DoctorDTO selected = doctorTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showAlert("Warning", "Please select a doctor to delete.");
             return;
@@ -540,11 +557,11 @@ public class MainController {
 
     @FXML
     private void handleDoctorTableClick() {
-        Doctor selected = doctorTable.getSelectionModel().getSelectedItem();
+        DoctorDTO selected = doctorTable.getSelectionModel().getSelectedItem();
         if (selected != null) {
             txtDoctorName.setText(selected.getName());
             txtSpecialization.setText(selected.getSpecialization());
-            
+
             // Find and select the department
             for (Department dept : departmentList) {
                 if (dept.getDepartmentId() == selected.getDepartmentId()) {
@@ -555,25 +572,28 @@ public class MainController {
         }
     }
 
-
     private void clearDoctorInputs() {
-        if (txtDoctorName != null) txtDoctorName.clear();
-        if (txtSpecialization != null) txtSpecialization.clear();
-        if (comboDepartment != null) comboDepartment.getSelectionModel().clearSelection();
+        if (txtDoctorName != null)
+            txtDoctorName.clear();
+        if (txtSpecialization != null)
+            txtSpecialization.clear();
+        if (comboDepartment != null)
+            comboDepartment.getSelectionModel().clearSelection();
     }
 
     /**
      * Shows an alert dialog with the given title and content.
-     * Uses appropriate alert type based on title (Success uses INFORMATION, Error uses ERROR).
+     * Uses appropriate alert type based on title (Success uses INFORMATION, Error
+     * uses ERROR).
      */
     // ========== Appointment Management Methods ==========
-
 
     @FXML
     private void handleAppointmentSearch() {
         if (appointmentSearchField != null && appointmentTable != null) {
             String query = appointmentSearchField.getText();
-            appointmentList = FXCollections.observableArrayList(appointmentServiceImpl.searchAppointments(query));
+            appointmentList = FXCollections
+                    .observableArrayList(appointmentServiceImpl.searchAppointmentsWithNames(query));
             appointmentTable.setItems(appointmentList);
             if (lblStatus != null) {
                 lblStatus.setText("Found " + appointmentList.size() + " appointment results.");
@@ -582,8 +602,10 @@ public class MainController {
     }
 
     /**
-     * Resets the appointment search by clearing the search field and reloading all appointments.
-     * This fulfills requirement #2: Add "Reset" / "Clear Search" button functionality.
+     * Resets the appointment search by clearing the search field and reloading all
+     * appointments.
+     * This fulfills requirement #2: Add "Reset" / "Clear Search" button
+     * functionality.
      */
     @FXML
     private void handleResetAppointmentSearch() {
@@ -598,7 +620,8 @@ public class MainController {
 
     /**
      * Handles adding a new appointment with duplicate/conflict checking.
-     * This fulfills requirement #5: Appointment management with duplicate prevention.
+     * This fulfills requirement #5: Appointment management with duplicate
+     * prevention.
      * 
      * Logic:
      * 1. Validate all required fields
@@ -652,10 +675,10 @@ public class MainController {
         // Check for duplicate/conflict (requirement #5)
         // For new appointments, excludeAppointmentId is -1
         if (appointmentServiceImpl.hasConflict(selectedDoctor.getDoctorId(), appointmentDateTime, -1)) {
-            showAlert("Conflict Error", 
-                "This doctor already has an appointment scheduled at " + 
-                appointmentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) + 
-                ". Please choose a different time.");
+            showAlert("Conflict Error",
+                    "This doctor already has an appointment scheduled at " +
+                            appointmentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) +
+                            ". Please choose a different time.");
             return; // Don't clear inputs on conflict
         }
 
@@ -684,11 +707,12 @@ public class MainController {
 
     /**
      * Handles updating an existing appointment with duplicate/conflict checking.
-     * This fulfills requirement #5: Appointment management with duplicate prevention.
+     * This fulfills requirement #5: Appointment management with duplicate
+     * prevention.
      */
     @FXML
     private void handleUpdateAppointment() {
-        Appointment selected = appointmentTable.getSelectionModel().getSelectedItem();
+        AppointmentDTO selected = appointmentTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showAlert("Warning", "Please select an appointment to update.");
             return;
@@ -730,11 +754,12 @@ public class MainController {
 
         // Check for duplicate/conflict (requirement #5)
         // For updates, exclude the current appointment ID
-        if (appointmentServiceImpl.hasConflict(selectedDoctor.getDoctorId(), appointmentDateTime, selected.getAppointmentId())) {
-            showAlert("Conflict Error", 
-                "This doctor already has an appointment scheduled at " + 
-                appointmentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) + 
-                ". Please choose a different time.");
+        if (appointmentServiceImpl.hasConflict(selectedDoctor.getDoctorId(), appointmentDateTime,
+                selected.getAppointmentId())) {
+            showAlert("Conflict Error",
+                    "This doctor already has an appointment scheduled at " +
+                            appointmentDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) +
+                            ". Please choose a different time.");
             return; // Don't clear inputs on conflict
         }
 
@@ -745,12 +770,14 @@ public class MainController {
         }
 
         // Update appointment
-        selected.setPatientId(selectedPatient.getPatientId());
-        selected.setDoctorId(selectedDoctor.getDoctorId());
-        selected.setAppointmentDate(appointmentDateTime);
-        selected.setStatus(status);
+        Appointment updateAppointment = new Appointment(
+                selected.getAppointmentId(),
+                selectedPatient.getPatientId(),
+                selectedDoctor.getDoctorId(),
+                status,
+                appointmentDateTime);
 
-        if (appointmentServiceImpl.updateAppointment(selected)) {
+        if (appointmentServiceImpl.updateAppointment(updateAppointment)) {
             showAlert("Success", "Appointment updated successfully.");
             clearAppointmentInputs(); // Clear inputs only on success (requirement #3)
             loadAppointments();
@@ -762,11 +789,12 @@ public class MainController {
 
     /**
      * Handles deleting an appointment.
-     * Clears inputs and table selection only on successful operation (requirement #3).
+     * Clears inputs and table selection only on successful operation (requirement
+     * #3).
      */
     @FXML
     private void handleDeleteAppointment() {
-        Appointment selected = appointmentTable.getSelectionModel().getSelectedItem();
+        AppointmentDTO selected = appointmentTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showAlert("Warning", "Please select an appointment to delete.");
             return;
@@ -795,28 +823,32 @@ public class MainController {
      */
     @FXML
     private void handleAppointmentTableClick() {
-        Appointment selected = appointmentTable.getSelectionModel().getSelectedItem();
+        AppointmentDTO selected = appointmentTable.getSelectionModel().getSelectedItem();
         if (selected != null) {
             // Find and select patient
-            for (Patient p : patientList) {
-                if (p.getPatientId() == selected.getPatientId()) {
-                    comboAppointmentPatient.getSelectionModel().select(p);
-                    break;
+            if (comboAppointmentPatient.getItems() != null) {
+                for (Patient p : comboAppointmentPatient.getItems()) {
+                    if (p.getPatientId() == selected.getPatientId()) {
+                        comboAppointmentPatient.getSelectionModel().select(p);
+                        break;
+                    }
                 }
             }
-            
+
             // Find and select doctor
-            for (Doctor d : doctorList) {
-                if (d.getDoctorId() == selected.getDoctorId()) {
-                    comboAppointmentDoctor.getSelectionModel().select(d);
-                    break;
+            if (comboAppointmentDoctor.getItems() != null) {
+                for (Doctor d : comboAppointmentDoctor.getItems()) {
+                    if (d.getDoctorId() == selected.getDoctorId()) {
+                        comboAppointmentDoctor.getSelectionModel().select(d);
+                        break;
+                    }
                 }
             }
-            
+
             // Set date and time
             dateAppointmentDate.setValue(selected.getAppointmentDate().toLocalDate());
             txtAppointmentTime.setText(selected.getAppointmentDate().format(DateTimeFormatter.ofPattern("HH:mm")));
-            
+
             // Set status
             comboAppointmentStatus.getSelectionModel().select(selected.getStatus());
         }
@@ -826,23 +858,32 @@ public class MainController {
      * Clears all appointment input fields.
      */
     private void clearAppointmentInputs() {
-        if (comboAppointmentPatient != null) comboAppointmentPatient.getSelectionModel().clearSelection();
-        if (comboAppointmentDoctor != null) comboAppointmentDoctor.getSelectionModel().clearSelection();
-        if (dateAppointmentDate != null) dateAppointmentDate.setValue(null);
-        if (txtAppointmentTime != null) txtAppointmentTime.clear();
-        if (comboAppointmentStatus != null) comboAppointmentStatus.getSelectionModel().select("Scheduled");
-        if (txtAppointmentNotes != null) txtAppointmentNotes.clear();
+        if (comboAppointmentPatient != null)
+            comboAppointmentPatient.getSelectionModel().clearSelection();
+        if (comboAppointmentDoctor != null)
+            comboAppointmentDoctor.getSelectionModel().clearSelection();
+        if (dateAppointmentDate != null)
+            dateAppointmentDate.setValue(null);
+        if (txtAppointmentTime != null)
+            txtAppointmentTime.clear();
+        if (comboAppointmentStatus != null)
+            comboAppointmentStatus.getSelectionModel().select("Scheduled");
+        if (txtAppointmentNotes != null)
+            txtAppointmentNotes.clear();
     }
 
     /**
      * Handles adding a medical note for the selected patient.
      * Opens a dialog to input medical note and saves to MongoDB.
      * This fulfills requirement #2: MongoDB integration with JavaFX UI.
-     * Epic: Medical Records Management / User Story: "explore storing patient notes or medical logs in a NoSQL format"
+     * Epic: Medical Records Management / User Story: "explore storing patient notes
+     * or medical logs in a NoSQL format"
      * Evaluation Category: UI Integration & NoSQL Implementation
      * 
-     * Why: Provides user interface to add unstructured medical notes that are stored
-     * in MongoDB, demonstrating polyglot persistence (MySQL for structured data, MongoDB for notes).
+     * Why: Provides user interface to add unstructured medical notes that are
+     * stored
+     * in MongoDB, demonstrating polyglot persistence (MySQL for structured data,
+     * MongoDB for notes).
      */
     @FXML
     private void handleAddMedicalNote() {
@@ -851,30 +892,30 @@ public class MainController {
             showAlert("Warning", "Please select a patient to add a medical note.");
             return;
         }
-        
+
         // Create dialog for medical note input
         Dialog<String[]> dialog = new Dialog<>();
         dialog.setTitle("Add Medical Note");
         dialog.setHeaderText("Add Medical Note for: " + selected.getName());
-        
+
         // Create form fields
         javafx.scene.control.Label noteLabel = new javafx.scene.control.Label("Medical Note:");
         TextArea noteArea = new TextArea();
         noteArea.setPrefRowCount(5);
         noteArea.setWrapText(true);
         noteArea.setPromptText("Enter medical note, observations, treatment details...");
-        
+
         javafx.scene.control.Label diagnosisLabel = new javafx.scene.control.Label("Diagnosis:");
         TextField diagnosisField = new TextField();
         diagnosisField.setPromptText("Enter diagnosis");
-        
+
         javafx.scene.layout.VBox vbox = new javafx.scene.layout.VBox(10);
         vbox.getChildren().addAll(noteLabel, noteArea, diagnosisLabel, diagnosisField);
         vbox.setPadding(new javafx.geometry.Insets(20));
-        
+
         dialog.getDialogPane().setContent(vbox);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        
+
         // Validate input before closing
         dialog.setResultConverter(buttonType -> {
             if (buttonType == ButtonType.OK) {
@@ -882,21 +923,23 @@ public class MainController {
                     showAlert("Validation Error", "Medical note cannot be empty.");
                     return null;
                 }
-                return new String[]{noteArea.getText().trim(), diagnosisField.getText().trim()};
+                return new String[] { noteArea.getText().trim(), diagnosisField.getText().trim() };
             }
             return null;
         });
-        
+
         Optional<String[]> result = dialog.showAndWait();
         result.ifPresent(data -> {
             String note = data[0];
             String diagnosis = data[1];
-            
+
             // Get current doctor (in real app, this would be from session/login)
             // For demo, use first doctor or prompt for doctor selection
-            Doctor selectedDoctor = doctorList != null && !doctorList.isEmpty() ? doctorList.get(0) : null;
+            Doctor selectedDoctor = allDoctorsForCombo != null && !allDoctorsForCombo.isEmpty()
+                    ? allDoctorsForCombo.get(0)
+                    : null;
             int doctorId = selectedDoctor != null ? selectedDoctor.getDoctorId() : 1;
-            
+
             // Save to MongoDB via service layer
             if (medicalRecordServiceImpl.addMedicalRecord(selected.getPatientId(), doctorId, note, diagnosis, null)) {
                 showAlert("Success", "Medical note added successfully to MongoDB.");
@@ -907,9 +950,8 @@ public class MainController {
     }
 
     private void showAlert(String title, String content) {
-        Alert.AlertType alertType = title.equals("Success") ? Alert.AlertType.INFORMATION : 
-                                    title.equals("Error") ? Alert.AlertType.ERROR :
-                                    Alert.AlertType.INFORMATION;
+        Alert.AlertType alertType = title.equals("Success") ? Alert.AlertType.INFORMATION
+                : title.equals("Error") ? Alert.AlertType.ERROR : Alert.AlertType.INFORMATION;
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
         alert.setContentText(content);

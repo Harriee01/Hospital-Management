@@ -26,7 +26,7 @@ public class AppointmentDAO {
         try {
             conn = DatabaseHelper.getConnection();
             try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
+                    ResultSet rs = stmt.executeQuery(sql)) {
 
                 while (rs.next()) {
                     appointments.add(mapResultSetToAppointment(rs));
@@ -104,7 +104,8 @@ public class AppointmentDAO {
     }
 
     /**
-     * Checks for duplicate/conflicting appointments for the same doctor at the same date/time.
+     * Checks for duplicate/conflicting appointments for the same doctor at the same
+     * date/time.
      * This method is critical for requirement #5: duplicate prevention.
      * 
      * Logic: An appointment conflicts if:
@@ -114,16 +115,17 @@ public class AppointmentDAO {
      * 
      * Uses the composite index idx_appointment_doctor_date for fast lookup.
      * 
-     * @param doctorId Doctor ID to check
-     * @param appointmentDate Date and time of the appointment
-     * @param excludeAppointmentId Appointment ID to exclude (for updates) or -1 for new appointments
+     * @param doctorId             Doctor ID to check
+     * @param appointmentDate      Date and time of the appointment
+     * @param excludeAppointmentId Appointment ID to exclude (for updates) or -1 for
+     *                             new appointments
      * @return true if a conflict exists, false otherwise
      */
     public boolean hasConflict(int doctorId, java.time.LocalDateTime appointmentDate, int excludeAppointmentId) {
         String sql = "SELECT COUNT(*) as conflict_count FROM Appointment " +
-                     "WHERE doctor_id = ? AND appointment_date = ? " +
-                     "AND appointment_id != ?";
-        
+                "WHERE doctor_id = ? AND appointment_date = ? " +
+                "AND appointment_id != ?";
+
         Connection conn = null;
         try {
             conn = DatabaseHelper.getConnection();
@@ -131,7 +133,7 @@ public class AppointmentDAO {
                 pstmt.setInt(1, doctorId);
                 pstmt.setTimestamp(2, Timestamp.valueOf(appointmentDate));
                 pstmt.setInt(3, excludeAppointmentId);
-                
+
                 ResultSet rs = pstmt.executeQuery();
                 if (rs.next()) {
                     int count = rs.getInt("conflict_count");
@@ -319,5 +321,99 @@ public class AppointmentDAO {
                 rs.getInt("doctor_id"),
                 rs.getString("status"),
                 rs.getTimestamp("appointment_date").toLocalDateTime());
+    }
+
+    /**
+     * Retrieves all appointments with patient and doctor names for UI display.
+     * Uses JOINs to get related information in a single query.
+     * Fields: ID, patient_ID, patient name, doctor ID, doctor name, date, and
+     * status
+     * 
+     * @return List of AppointmentDTO objects with patient and doctor names
+     */
+    public List<com.hospital.model.AppointmentDTO> getAllAppointmentsWithNames() {
+        List<com.hospital.model.AppointmentDTO> appointments = new ArrayList<>();
+        String sql = "SELECT a.appointment_id, a.patient_id, p.name AS patient_name, " +
+                "a.doctor_id, d.name AS doctor_name, a.appointment_date, a.status " +
+                "FROM Appointment a " +
+                "LEFT JOIN Patient p ON a.patient_id = p.patient_id " +
+                "LEFT JOIN Doctor d ON a.doctor_id = d.doctor_id " +
+                "ORDER BY a.appointment_date DESC";
+
+        Connection conn = null;
+        try {
+            conn = DatabaseHelper.getConnection();
+            try (Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery(sql)) {
+
+                while (rs.next()) {
+                    com.hospital.model.AppointmentDTO appointmentDTO = new com.hospital.model.AppointmentDTO(
+                            rs.getInt("appointment_id"),
+                            rs.getInt("patient_id"),
+                            rs.getString("patient_name"),
+                            rs.getInt("doctor_id"),
+                            rs.getString("doctor_name"),
+                            rs.getTimestamp("appointment_date").toLocalDateTime(),
+                            rs.getString("status"));
+                    appointments.add(appointmentDTO);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                DatabaseHelper.releaseConnection(conn);
+            }
+        }
+        return appointments;
+    }
+
+    /**
+     * Searches for appointments with patient and doctor names by status or names.
+     * 
+     * @param query Search string
+     * @return List of matching AppointmentDTO objects with patient and doctor names
+     */
+    public List<com.hospital.model.AppointmentDTO> searchAppointmentsWithNames(String query) {
+        List<com.hospital.model.AppointmentDTO> appointments = new ArrayList<>();
+        String sql = "SELECT a.appointment_id, a.patient_id, p.name AS patient_name, " +
+                "a.doctor_id, d.name AS doctor_name, a.appointment_date, a.status " +
+                "FROM Appointment a " +
+                "LEFT JOIN Patient p ON a.patient_id = p.patient_id " +
+                "LEFT JOIN Doctor d ON a.doctor_id = d.doctor_id " +
+                "WHERE a.appointment_id LIKE ? OR a.status LIKE ? OR p.name LIKE ? OR d.name LIKE ?";
+
+        String searchPattern = "%" + query + "%";
+
+        Connection conn = null;
+        try {
+            conn = DatabaseHelper.getConnection();
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, searchPattern);
+                pstmt.setString(2, searchPattern);
+                pstmt.setString(3, searchPattern);
+                pstmt.setString(4, searchPattern);
+
+                ResultSet rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    com.hospital.model.AppointmentDTO appointmentDTO = new com.hospital.model.AppointmentDTO(
+                            rs.getInt("appointment_id"),
+                            rs.getInt("patient_id"),
+                            rs.getString("patient_name"),
+                            rs.getInt("doctor_id"),
+                            rs.getString("doctor_name"),
+                            rs.getTimestamp("appointment_date").toLocalDateTime(),
+                            rs.getString("status"));
+                    appointments.add(appointmentDTO);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                DatabaseHelper.releaseConnection(conn);
+            }
+        }
+        return appointments;
     }
 }
